@@ -1,4 +1,4 @@
-# Email Chronology v1.0.1
+# Email Chronology v1.0.2
 
 A simple web application for viewing email chains from `.msg` files in chronological order.
 
