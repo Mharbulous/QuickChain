@@ -48,38 +48,69 @@ class EmailChronologyApp {
         });
 
         // Drag and drop for initial drop zone
+        this.initialDropZone.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.initialDropZone.classList.add('drag-over');
+        });
+
         this.initialDropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            this.initialDropZone.classList.add('drag-over');
+            e.stopPropagation();
         });
 
         this.initialDropZone.addEventListener('dragleave', (e) => {
             e.preventDefault();
-            this.initialDropZone.classList.remove('drag-over');
+            e.stopPropagation();
+            // Only remove if we're leaving the drop zone itself, not a child element
+            const rect = this.initialDropZone.getBoundingClientRect();
+            if (
+                e.clientX <= rect.left ||
+                e.clientX >= rect.right ||
+                e.clientY <= rect.top ||
+                e.clientY >= rect.bottom
+            ) {
+                this.initialDropZone.classList.remove('drag-over');
+            }
         });
 
         this.initialDropZone.addEventListener('drop', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.initialDropZone.classList.remove('drag-over');
             this.handleFiles(e.dataTransfer.files);
         });
 
         // Drag and drop for email chain area
+        this.emailChainEl.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showDragOverlay();
+        });
+
         this.emailChainEl.addEventListener('dragover', (e) => {
             e.preventDefault();
-            this.showDragOverlay();
+            e.stopPropagation();
         });
 
         this.emailChainEl.addEventListener('dragleave', (e) => {
             e.preventDefault();
-            // Only hide if leaving the email chain area entirely
-            if (e.target === this.emailChainEl) {
+            e.stopPropagation();
+            // Only hide if we're leaving the email chain area entirely
+            const rect = this.emailChainEl.getBoundingClientRect();
+            if (
+                e.clientX <= rect.left ||
+                e.clientX >= rect.right ||
+                e.clientY <= rect.top ||
+                e.clientY >= rect.bottom
+            ) {
                 this.hideDragOverlay();
             }
         });
 
         this.emailChainEl.addEventListener('drop', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.hideDragOverlay();
             this.handleFiles(e.dataTransfer.files);
         });
