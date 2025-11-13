@@ -1,5 +1,5 @@
 /**
- * Email Chronology v1.0.2 - Main Application
+ * Email Chronology v1.0.3 - Main Application
  * Email chain viewer for .msg files
  */
 
