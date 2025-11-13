@@ -33,7 +33,7 @@ class ToastManager {
 
         // Add close button listener
         const closeBtn = toast.querySelector('.toast-close');
-        closeBtn.addEventListener('click', () => this.close(id));
+        closeBtn.addEventListener('click', () => this.closeAll());
 
         // Add to container
         this.container.appendChild(toast);
