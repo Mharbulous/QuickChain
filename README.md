@@ -28,7 +28,7 @@ A simple web application for viewing email chains from `.msg` files in chronolog
 
 3. Open your browser to the URL shown (typically `http://localhost:5173`)
 
-4. Drop `.msg` files onto the drop zone or click to browse
+4. Drop `.msg` files onto the drop zone 
 
 5. View your emails in chronological order
 
