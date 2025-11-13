@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
-  base: '/Email Chronology/',
+  base: '/',
   plugins: [
     nodePolyfills({
       // Enable polyfills for specific globals and modules

@@ -8,7 +8,7 @@ import { ProcessingQueue } from './queue.js';
 import { EmailChain } from './emailChain.js';
 import { parseMsgFile } from './msgParser.js';
 
-class Email ChronologyApp {
+class EmailChronologyApp {
     constructor() {
         this.emailChain = new EmailChain();
         this.queue = new ProcessingQueue(this.processFile.bind(this));
@@ -211,8 +211,8 @@ class Email ChronologyApp {
 // Initialize app when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        new Email ChronologyApp();
+        new EmailChronologyApp();
     });
 } else {
-    new Email ChronologyApp();
+    new EmailChronologyApp();
 }
