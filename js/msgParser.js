@@ -8,7 +8,7 @@ import * as MsgReader from '@kenjiuno/msgreader';
 /**
  * Parse a .msg file
  * @param {File} file - .msg file to parse
- * @returns {Promise<Object>} Parsed email object
+ * @returns {Promise<Array<Object>>} Array of parsed email objects
  * @throws {Error} If parsing fails
  */
 export async function parseMsgFile(file) {
@@ -31,7 +31,11 @@ export async function parseMsgFile(file) {
             attachments: extractAttachments(fileData.attachments)
         };
 
-        return email;
+        // Check if this is a forwarded email chain and extract individual emails
+        const chainEmails = parseForwardedChain(email);
+
+        // Return array of emails (either the chain or single email wrapped in array)
+        return chainEmails.length > 0 ? chainEmails : [email];
     } catch (error) {
         console.error('Error parsing .msg file:', error);
         throw new Error(`Failed to parse ${file.name}: ${error.message}`);
@@ -166,4 +170,164 @@ function extractAttachments(attachments) {
     return attachments
         .map(att => att.fileName || att.name)
         .filter(Boolean);
+}
+
+/**
+ * Parse forwarded email chain from email body
+ * Detects Outlook-style forwarded emails and extracts individual messages
+ * @param {Object} email - Email object with body text
+ * @returns {Array<Object>} Array of individual email objects, or empty array if not a chain
+ */
+function parseForwardedChain(email) {
+    if (!email.body) {
+        return [];
+    }
+
+    const body = email.body;
+
+    // Check if this looks like a forwarded email chain
+    // Outlook uses separator lines (underscores) and headers like "From:", "Sent:", "To:", "Subject:"
+    const hasOutlookSeparator = /_{20,}/.test(body);
+    const hasForwardedHeaders = /^(From|Sent):/m.test(body);
+
+    if (!hasOutlookSeparator && !hasForwardedHeaders) {
+        // Not a forwarded chain, return empty array
+        return [];
+    }
+
+    // Split by Outlook separator lines
+    const sections = body.split(/_{20,}/);
+    const emails = [];
+
+    for (const section of sections) {
+        const trimmedSection = section.trim();
+        if (!trimmedSection) continue;
+
+        // Try to extract email metadata from this section
+        const extractedEmail = extractEmailFromSection(trimmedSection);
+        if (extractedEmail) {
+            emails.push(extractedEmail);
+        }
+    }
+
+    // If we successfully extracted multiple emails, return them
+    // Otherwise, return empty array to use the original email
+    return emails.length > 1 ? emails : [];
+}
+
+/**
+ * Extract email metadata from a forwarded email section
+ * @param {string} section - Text section containing one email
+ * @returns {Object|null} Email object or null if parsing fails
+ */
+function extractEmailFromSection(section) {
+    const lines = section.split('\n');
+    const email = {
+        from: '',
+        to: '',
+        cc: '',
+        date: null,
+        subject: '',
+        body: '',
+        attachments: []
+    };
+
+    let bodyStartIndex = 0;
+    let foundHeaders = false;
+
+    // Parse headers (From, Sent/Date, To, Cc, Subject)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // Match "From: Name <email>" or "From: email"
+        if (/^From:/i.test(line)) {
+            email.from = line.replace(/^From:\s*/i, '').trim();
+            foundHeaders = true;
+            bodyStartIndex = i + 1;
+            continue;
+        }
+
+        // Match "Sent: Date" (Outlook format)
+        if (/^Sent:/i.test(line)) {
+            const dateStr = line.replace(/^Sent:\s*/i, '').trim();
+            email.date = parseOutlookDate(dateStr);
+            bodyStartIndex = i + 1;
+            continue;
+        }
+
+        // Match "Date: Date" (alternative format)
+        if (/^Date:/i.test(line)) {
+            const dateStr = line.replace(/^Date:\s*/i, '').trim();
+            email.date = parseDate(dateStr);
+            bodyStartIndex = i + 1;
+            continue;
+        }
+
+        // Match "To: recipients"
+        if (/^To:/i.test(line)) {
+            email.to = line.replace(/^To:\s*/i, '').trim();
+            bodyStartIndex = i + 1;
+            continue;
+        }
+
+        // Match "Cc: recipients"
+        if (/^Cc:/i.test(line)) {
+            email.cc = line.replace(/^Cc:\s*/i, '').trim();
+            bodyStartIndex = i + 1;
+            continue;
+        }
+
+        // Match "Subject: subject"
+        if (/^Subject:/i.test(line)) {
+            email.subject = line.replace(/^Subject:\s*/i, '').trim();
+            bodyStartIndex = i + 1;
+            continue;
+        }
+
+        // If we've found headers and hit a non-header line, start body
+        if (foundHeaders && line && !/^(From|Sent|Date|To|Cc|Subject):/i.test(line)) {
+            bodyStartIndex = i;
+            break;
+        }
+    }
+
+    // Extract body (everything after headers)
+    if (bodyStartIndex < lines.length) {
+        email.body = lines.slice(bodyStartIndex).join('\n').trim();
+    }
+
+    // Only return if we found at least a sender and date
+    if (email.from && email.date) {
+        return email;
+    }
+
+    return null;
+}
+
+/**
+ * Parse Outlook-style date format
+ * Examples: "Thursday, January 9, 2025 7:06 PM" or "Monday, January 6, 2025 9:26:12 AM"
+ * @param {string} dateStr - Date string from Outlook
+ * @returns {Date|null} Parsed date or null
+ */
+function parseOutlookDate(dateStr) {
+    if (!dateStr) return null;
+
+    // Outlook format: "Day, Month Date, Year Time AM/PM"
+    // Example: "Thursday, January 9, 2025 7:06 PM"
+
+    // Try to parse directly first
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed)) {
+        return parsed;
+    }
+
+    // Try removing the day of week
+    const withoutDay = dateStr.replace(/^[A-Za-z]+,\s*/, '');
+    const parsedWithoutDay = new Date(withoutDay);
+    if (!isNaN(parsedWithoutDay)) {
+        return parsedWithoutDay;
+    }
+
+    return null;
 }

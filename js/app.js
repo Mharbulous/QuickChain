@@ -145,17 +145,29 @@ class QuickChainApp {
      */
     async processFile(file) {
         try {
-            // Parse the .msg file
-            const email = await parseMsgFile(file);
+            // Parse the .msg file (returns array of emails)
+            const emails = await parseMsgFile(file);
 
-            // Add to email chain
-            const added = this.emailChain.addEmail(email);
+            // Track how many were added vs duplicates
+            let addedCount = 0;
+            let duplicateCount = 0;
 
-            if (!added) {
-                // Duplicate email, show info toast
+            // Add each email to the chain
+            for (const email of emails) {
+                const added = this.emailChain.addEmail(email);
+                if (added) {
+                    addedCount++;
+                } else {
+                    duplicateCount++;
+                }
+            }
+
+            // Show notification if there were duplicates
+            if (duplicateCount > 0) {
+                const emailWord = duplicateCount === 1 ? 'email' : 'emails';
                 toastManager.showError(
                     'Duplicate Email',
-                    `"${file.name}" contains an email that has already been added.`
+                    `"${file.name}" contained ${duplicateCount} ${emailWord} that ${duplicateCount === 1 ? 'has' : 'have'} already been added.`
                 );
             }
         } catch (error) {
