@@ -111,6 +111,15 @@ npm run build        # Build for production
 npm run preview      # Preview production build
 ```
 
+### Committing Changes
+**IMPORTANT**: Before every commit and push, you MUST update the commit date in `index.html`:
+
+1. Get the current date/time using: `git log -1 --format="%cd" --date=format:"%I:%M%p on %B %d, %Y"`
+2. Update the commit date in the `.commit-date` div in `index.html` (line ~16)
+3. Format: "Commit date: HH:MM(AM/PM) on Month DD, YYYY"
+
+This ensures the live app displays the correct version information to users.
+
 ### Build Configuration
 - Base path: `/QuickChain/` (configured for GitHub Pages)
 - Output directory: `dist/`
