@@ -90,75 +90,37 @@ export class EmailChain {
         // Clear container
         this.container.innerHTML = '';
 
-        // Group emails by source file
-        const groupedEmails = this.groupBySourceFile(sortedEmails);
-
-        // Render each group with alternating alignment
-        groupedEmails.forEach((group, index) => {
-            const groupEl = this.createFileGroupElement(group, index);
-            this.container.appendChild(groupEl);
+        // Render each email as an individual card with alternating alignment
+        sortedEmails.forEach((email, index) => {
+            const emailCard = this.createEmailCard(email, index);
+            this.container.appendChild(emailCard);
         });
     }
 
     /**
-     * Group emails by source file, maintaining chronological order
-     * @param {Array} sortedEmails - Chronologically sorted emails
-     * @returns {Array} Array of groups with sourceFile and emails
+     * Create an individual email card with alternating alignment
+     * @param {Object} email - Email object
+     * @param {number} index - Index of the email for alternating alignment
+     * @returns {HTMLElement} Email card element
      */
-    groupBySourceFile(sortedEmails) {
-        const groups = [];
-        const fileMap = new Map();
-
-        // Track the order we first see each file and group emails
-        sortedEmails.forEach(email => {
-            const sourceFile = email.sourceFile || 'Unknown';
-
-            if (!fileMap.has(sourceFile)) {
-                const group = {
-                    sourceFile,
-                    emails: []
-                };
-                fileMap.set(sourceFile, group);
-                groups.push(group);
-            }
-
-            fileMap.get(sourceFile).emails.push(email);
-        });
-
-        return groups;
-    }
-
-    /**
-     * Create a file group element (paper sheet container)
-     * @param {Object} group - Group object with sourceFile and emails array
-     * @param {number} index - Index of the group for alternating alignment
-     * @returns {HTMLElement} Group element
-     */
-    createFileGroupElement(group, index) {
-        const groupDiv = document.createElement('div');
+    createEmailCard(email, index) {
+        const cardDiv = document.createElement('div');
         // Alternate between left and right alignment
-        const alignmentClass = index % 2 === 0 ? 'file-group-left' : 'file-group-right';
-        groupDiv.className = `file-group ${alignmentClass}`;
+        const alignmentClass = index % 2 === 0 ? 'email-card-left' : 'email-card-right';
+        cardDiv.className = `email-card ${alignmentClass}`;
 
-        // Add source filename header
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'file-group-header';
-        headerDiv.textContent = group.sourceFile;
-        groupDiv.appendChild(headerDiv);
+        // Add source file badge
+        const sourceFile = email.sourceFile || 'Unknown';
+        const sourceBadge = document.createElement('div');
+        sourceBadge.className = 'email-source-badge';
+        sourceBadge.textContent = sourceFile;
+        cardDiv.appendChild(sourceBadge);
 
-        // Add emails to the group
-        group.emails.forEach((email, index) => {
-            const emailEl = this.createEmailElement(email);
+        // Add email content
+        const emailContent = this.createEmailElement(email);
+        cardDiv.appendChild(emailContent);
 
-            // Add special class to last email in group to remove bottom border
-            if (index === group.emails.length - 1) {
-                emailEl.classList.add('last-in-group');
-            }
-
-            groupDiv.appendChild(emailEl);
-        });
-
-        return groupDiv;
+        return cardDiv;
     }
 
     /**
