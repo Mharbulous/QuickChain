@@ -28,11 +28,12 @@ export async function parseMsgFile(file) {
             cc: formatRecipients(fileData.recipients, 'cc'),
             date: parseDate(fileData.messageDeliveryTime || fileData.clientSubmitTime),
             body: extractBody(fileData),
-            attachments: extractAttachments(fileData.attachments)
+            attachments: extractAttachments(fileData.attachments),
+            sourceFile: file.name  // Track source filename
         };
 
         // Check if this is a forwarded email chain and extract individual emails
-        const chainEmails = parseForwardedChain(email);
+        const chainEmails = parseForwardedChain(email, file.name);
 
         // Return array of emails (either the chain or single email wrapped in array)
         return chainEmails.length > 0 ? chainEmails : [email];
@@ -176,9 +177,10 @@ function extractAttachments(attachments) {
  * Parse forwarded email chain from email body
  * Detects Outlook-style forwarded emails and extracts individual messages
  * @param {Object} email - Email object with body text
+ * @param {string} sourceFile - Name of the source .msg file
  * @returns {Array<Object>} Array of individual email objects, or empty array if not a chain
  */
-function parseForwardedChain(email) {
+function parseForwardedChain(email, sourceFile) {
     if (!email.body) {
         return [];
     }
@@ -206,6 +208,7 @@ function parseForwardedChain(email) {
         // Try to extract email metadata from this section
         const extractedEmail = extractEmailFromSection(trimmedSection);
         if (extractedEmail) {
+            extractedEmail.sourceFile = sourceFile;  // Add source file to each extracted email
             emails.push(extractedEmail);
         }
     }

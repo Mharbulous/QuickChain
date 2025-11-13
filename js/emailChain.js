@@ -90,11 +90,72 @@ export class EmailChain {
         // Clear container
         this.container.innerHTML = '';
 
-        // Render each email
-        sortedEmails.forEach(email => {
-            const emailEl = this.createEmailElement(email);
-            this.container.appendChild(emailEl);
+        // Group emails by source file
+        const groupedEmails = this.groupBySourceFile(sortedEmails);
+
+        // Render each group
+        groupedEmails.forEach(group => {
+            const groupEl = this.createFileGroupElement(group);
+            this.container.appendChild(groupEl);
         });
+    }
+
+    /**
+     * Group emails by source file, maintaining chronological order
+     * @param {Array} sortedEmails - Chronologically sorted emails
+     * @returns {Array} Array of groups with sourceFile and emails
+     */
+    groupBySourceFile(sortedEmails) {
+        const groups = [];
+        const fileMap = new Map();
+
+        // Track the order we first see each file and group emails
+        sortedEmails.forEach(email => {
+            const sourceFile = email.sourceFile || 'Unknown';
+
+            if (!fileMap.has(sourceFile)) {
+                const group = {
+                    sourceFile,
+                    emails: []
+                };
+                fileMap.set(sourceFile, group);
+                groups.push(group);
+            }
+
+            fileMap.get(sourceFile).emails.push(email);
+        });
+
+        return groups;
+    }
+
+    /**
+     * Create a file group element (paper sheet container)
+     * @param {Object} group - Group object with sourceFile and emails array
+     * @returns {HTMLElement} Group element
+     */
+    createFileGroupElement(group) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'file-group';
+
+        // Add source filename header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'file-group-header';
+        headerDiv.textContent = group.sourceFile;
+        groupDiv.appendChild(headerDiv);
+
+        // Add emails to the group
+        group.emails.forEach((email, index) => {
+            const emailEl = this.createEmailElement(email);
+
+            // Add special class to last email in group to remove bottom border
+            if (index === group.emails.length - 1) {
+                emailEl.classList.add('last-in-group');
+            }
+
+            groupDiv.appendChild(emailEl);
+        });
+
+        return groupDiv;
     }
 
     /**
