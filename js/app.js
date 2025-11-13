@@ -7,6 +7,7 @@ import { toastManager } from './toast.js';
 import { ProcessingQueue } from './queue.js';
 import { EmailChain } from './emailChain.js';
 import { parseMsgFile } from './msgParser.js';
+import { DragDropManager } from './dragDropManager.js';
 
 class EmailChronologyApp {
     constructor() {
@@ -15,6 +16,7 @@ class EmailChronologyApp {
 
         this.initializeElements();
         this.initializeEventListeners();
+        this.initializeDragDrop();
     }
 
     /**
@@ -47,74 +49,6 @@ class EmailChronologyApp {
             e.target.value = '';
         });
 
-        // Drag and drop for initial drop zone
-        this.initialDropZone.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.initialDropZone.classList.add('drag-over');
-        });
-
-        this.initialDropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        this.initialDropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Only remove if we're leaving the drop zone itself, not a child element
-            const rect = this.initialDropZone.getBoundingClientRect();
-            if (
-                e.clientX <= rect.left ||
-                e.clientX >= rect.right ||
-                e.clientY <= rect.top ||
-                e.clientY >= rect.bottom
-            ) {
-                this.initialDropZone.classList.remove('drag-over');
-            }
-        });
-
-        this.initialDropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.initialDropZone.classList.remove('drag-over');
-            this.handleFiles(e.dataTransfer.files);
-        });
-
-        // Drag and drop for email chain area
-        this.emailChainEl.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.showDragOverlay();
-        });
-
-        this.emailChainEl.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        this.emailChainEl.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Only hide if we're leaving the email chain area entirely
-            const rect = this.emailChainEl.getBoundingClientRect();
-            if (
-                e.clientX <= rect.left ||
-                e.clientX >= rect.right ||
-                e.clientY <= rect.top ||
-                e.clientY >= rect.bottom
-            ) {
-                this.hideDragOverlay();
-            }
-        });
-
-        this.emailChainEl.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.hideDragOverlay();
-            this.handleFiles(e.dataTransfer.files);
-        });
-
         // Prevent default drag behavior on document
         document.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -123,6 +57,58 @@ class EmailChronologyApp {
         document.addEventListener('drop', (e) => {
             e.preventDefault();
         });
+    }
+
+    /**
+     * Initialize drag and drop managers
+     */
+    initializeDragDrop() {
+        // Drag and drop for initial drop zone
+        this.initialDropZoneDnD = new DragDropManager(
+            this.initialDropZone,
+            (files) => this.handleFiles(files),
+            {
+                allowedExtensions: ['.msg'],
+                onInvalidFile: (file) => {
+                    toastManager.showError(
+                        'Invalid File Type',
+                        `"${file.name}" is not a .msg file and will be ignored.`
+                    );
+                }
+            }
+        );
+
+        // Drag and drop for email chain area with overlay
+        this.emailChainDnD = new DragDropManager(
+            this.emailChainEl,
+            (files) => {
+                this.hideDragOverlay();
+                this.handleFiles(files);
+            },
+            {
+                allowedExtensions: ['.msg'],
+                onInvalidFile: (file) => {
+                    toastManager.showError(
+                        'Invalid File Type',
+                        `"${file.name}" is not a .msg file and will be ignored.`
+                    );
+                }
+            }
+        );
+
+        // Override activate/deactivate for email chain to show/hide overlay
+        const originalActivate = this.emailChainDnD.activate.bind(this.emailChainDnD);
+        const originalDeactivate = this.emailChainDnD.deactivate.bind(this.emailChainDnD);
+
+        this.emailChainDnD.activate = () => {
+            originalActivate();
+            this.showDragOverlay();
+        };
+
+        this.emailChainDnD.deactivate = () => {
+            originalDeactivate();
+            this.hideDragOverlay();
+        };
     }
 
     /**
@@ -143,15 +129,18 @@ class EmailChronologyApp {
 
     /**
      * Handle dropped or selected files
-     * @param {FileList} files - Files to handle
+     * @param {FileList|Array} files - Files to handle
      */
     handleFiles(files) {
         if (!files || files.length === 0) {
             return;
         }
 
-        // Filter for .msg files only
-        const msgFiles = Array.from(files).filter(file => {
+        // Convert to array if needed (DragDropManager already provides arrays)
+        const fileArray = Array.isArray(files) ? files : Array.from(files);
+
+        // For file input, filter for .msg files (DragDropManager handles this for drag-drop)
+        const msgFiles = fileArray.filter(file => {
             const isMsgFile = file.name.toLowerCase().endsWith('.msg');
             if (!isMsgFile) {
                 toastManager.showError(
