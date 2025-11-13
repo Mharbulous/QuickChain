@@ -204,6 +204,23 @@ These are provided by `vite-plugin-node-polyfills` configured in `vite.config.js
 
 ## Deployment
 
-The app is configured for GitHub Pages with base path `/QuickChain/`. To deploy elsewhere, update the `base` property in `vite.config.js`.
+### GitHub Pages Setup
+
+The app is configured for GitHub Pages with base path `/QuickChain/`.
+
+**Automatic Deployment:**
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically builds and deploys the app when changes are pushed to the `main` branch.
+
+**First-time Setup:**
+1. Go to your GitHub repository Settings → Pages
+2. Under "Build and deployment", set Source to "GitHub Actions"
+3. Push changes to the `main` branch to trigger deployment
+4. The workflow will build the app and deploy to GitHub Pages automatically
+
+**Manual Deployment:**
+If needed, you can manually deploy by:
+1. Running `npm run build` to create the `dist/` folder
+2. Using `git subtree push --prefix dist origin gh-pages` to push only the dist folder to gh-pages branch
+3. Ensure GitHub Pages is configured to serve from the gh-pages branch
 
 Built files in `dist/` directory are ready to be served by any static hosting provider.
