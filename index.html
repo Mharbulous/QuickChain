@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickChain - Email Chain Viewer</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header with title and controls -->
+        <header class="app-header">
+            <h1>QuickChain</h1>
+            <button id="clearAllBtn" class="clear-btn">Clear All</button>
+        </header>
+
+        <!-- Queue Status -->
+        <div id="queueStatus" class="queue-status hidden">
+            <div class="queue-info">
+                <span class="queue-label">Queue:</span>
+                <span id="queueCount" class="queue-count">0</span>
+                <span class="queue-separator">|</span>
+                <span id="queueState" class="queue-state">Ready</span>
+            </div>
+            <div id="queueDetails" class="queue-details hidden">
+                <div class="queue-item">
+                    <span class="queue-item-label">Processing:</span>
+                    <span id="currentFile" class="queue-item-value">-</span>
+                </div>
+                <div class="queue-item">
+                    <span class="queue-item-label">Next:</span>
+                    <span id="nextFile" class="queue-item-value">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Initial Drop Zone (shown when no emails) -->
+            <div id="initialDropZone" class="initial-drop-zone">
+                <div class="drop-zone-content">
+                    <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M7 18C4.79086 18 3 16.2091 3 14C3 11.7909 4.79086 10 7 10C7 7.23858 9.23858 5 12 5C14.7614 5 17 7.23858 17 10C19.2091 10 21 11.7909 21 14C21 16.2091 19.2091 18 17 18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 12V21M12 12L9 15M12 12L15 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p class="drop-zone-text">Drop .msg files here</p>
+                    <p class="drop-zone-subtext">or click to browse</p>
+                    <input type="file" id="fileInput" multiple accept=".msg" hidden>
+                </div>
+            </div>
+
+            <!-- Email Chain Display (shown when emails exist) -->
+            <div id="emailChain" class="email-chain hidden">
+                <!-- Emails will be inserted here -->
+            </div>
+
+            <!-- Drag Overlay (shown when dragging over email chain) -->
+            <div id="dragOverlay" class="drag-overlay hidden">
+                <div class="drag-overlay-content">
+                    <svg class="drag-overlay-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 5V19M5 12H19" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                    <p class="drag-overlay-text">Drop to add emails</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>
